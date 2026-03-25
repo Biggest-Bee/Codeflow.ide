@@ -1,0 +1,83 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account.",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "username": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "isAnonymous": { "type": "boolean" },
+        "selectedServer": { "type": "string", "description": "The user's preferred edge node." },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "email", "username", "createdAt"]
+    },
+    "Team": {
+      "title": "Team",
+      "type": "object",
+      "description": "A top-level entity that owns workspaces and manages teams.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "teamApiKey": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "ownerId"]
+    },
+    "Member": {
+      "title": "Member",
+      "type": "object",
+      "description": "A member of a team.",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "joinedAt": { "type": "number" }
+      },
+      "required": ["userId", "username", "email"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "type": "object",
+      "description": "A container for files and folders.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "userId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "rootFileIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "userId", "createdAt"]
+    },
+    "TeamInvite": {
+      "title": "TeamInvite",
+      "type": "object",
+      "description": "An invitation for a user to join a team.",
+      "properties": {
+        "id": { "type": "string" },
+        "teamId": { "type": "string" },
+        "teamName": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/users/{userId}/workspaces/{wsId}": { "schema": "Workspace", "description": "Personal workspaces" },
+    "/teams/{teamId}": { "schema": "Team", "description": "Teams" },
+    "/teams/{teamId}/workspaces/{wsId}": { "schema": "Workspace", "description": "Team workspaces" },
+    "/teams/{teamId}/members/{userId}": { "schema": "Member", "description": "Team members" },
+    "/users/{userId}/invites/{inviteId}": { "schema": "TeamInvite", "description": "Team invitations" }
+  }
+}

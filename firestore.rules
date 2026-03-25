@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helpers ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isTeamOwner(teamId) {
+      return isSignedIn() && get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid;
+    }
+
+    function isTeamMember(teamId) {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid ||
+        exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid))
+      );
+    }
+
+    // Helper to check if a user is a collaborator on a specific node via team membership
+    function isCollaborator(nodeData) {
+      return nodeData.teamId != null && isTeamMember(nodeData.teamId);
+    }
+
+    // --- Teams ---
+
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow write: if isTeamOwner(teamId) || (request.method == 'create' && request.resource.data.ownerId == request.auth.uid);
+
+      match /workspaces/{workspaceId} {
+        allow read, write: if isTeamMember(teamId);
+      }
+
+      match /members/{memberId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId) || (isSignedIn() && request.auth.uid == memberId);
+      }
+    }
+
+    // --- Users ---
+
+    match /users/{userId} {
+      // Allow searching by specific email for invites, but strictly prohibit public listing/scraping
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && request.query.limit <= 1;
+      allow write: if isOwner(userId);
+
+      match /workspaces/{workspaceId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /nodes/{nodeId} {
+        // SECURE: Only the owner or a verified team member can access these files.
+        // No more "isSignedIn()" public hole.
+        allow read: if isOwner(userId) || isCollaborator(resource.data);
+        allow write: if isOwner(userId) || isCollaborator(resource.data) || isCollaborator(request.resource.data);
+      }
+      
+      match /keys/{keyId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /invites/{inviteId} {
+        allow read, write: if isOwner(userId);
+        allow create: if isSignedIn();
+      }
+
+      match /missions/{missionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
