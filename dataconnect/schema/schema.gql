@@ -1,0 +1,45 @@
+type User @table {
+  displayName: String!
+  email: String
+  photoUrl: String
+  preferences: String # JSON for AI settings
+  createdAt: Timestamp!
+}
+
+type Project @table {
+  user: User!
+  name: String!
+  description: String
+  language: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type File @table {
+  project: Project!
+  name: String!
+  content: String!
+  fileType: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIChat @table {
+  user: User!
+  project: Project
+  file: File
+  userMessage: String!
+  aiResponse: String!
+  feedback: String
+  createdAt: Timestamp!
+}
+
+type CodeSnippet @table {
+  user: User!
+  title: String!
+  code: String!
+  language: String!
+  description: String
+  tags: [String]
+  createdAt: Timestamp!
+}

@@ -1,0 +1,22 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract dark blue tech background with light particles",
+      "imageUrl": "https://picsum.photos/seed/codeflow1/1200/800",
+      "imageHint": "abstract technology"
+    },
+    {
+      "id": "workspace-empty",
+      "description": "Clean minimalist developer desk with laptop",
+      "imageUrl": "https://picsum.photos/seed/codeflow2/600/400",
+      "imageHint": "developer workspace"
+    },
+    {
+      "id": "ai-visual",
+      "description": "Glowing neural network architecture",
+      "imageUrl": "https://picsum.photos/seed/codeflow3/800/600",
+      "imageHint": "artificial intelligence"
+    }
+  ]
+}

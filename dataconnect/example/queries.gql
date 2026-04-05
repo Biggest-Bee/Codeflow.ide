@@ -1,0 +1,42 @@
+query ListAllProjects @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  projects {
+    id
+    name
+    description
+    language
+    createdAt
+    user {
+      id
+      displayName
+    }
+  }
+}
+
+mutation CreateNewFile($projectId: UUID!, $name: String!, $content: String!, $fileType: String) @auth(level: USER) {
+  file_insert(data: {
+    projectId: $projectId,
+    name: $name,
+    content: $content,
+    fileType: $fileType,
+    createdAt_expr: "request.time",
+    updatedAt_expr: "request.time"
+  })
+}
+
+query GetMyCodeSnippets @auth(level: USER) {
+  codeSnippets(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    title
+    language
+    createdAt
+    user {
+      displayName
+    }
+  }
+}
+
+mutation RecordAIChatFeedback($chatId: UUID!, $feedback: String!) @auth(level: USER) {
+  aIChat_update(key: {id: $chatId}, data: {
+    feedback: $feedback
+  })
+}

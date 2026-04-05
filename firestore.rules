@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPERS ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+
+    // CRITICAL for Deletion: Checks the root team document for ownership.
+    // This allows sub-collection deletion even if the user is removed from /members/ first.
+    function isTeamOwner(teamId) {
+      let teamPath = /databases/$(database)/documents/teams/$(teamId);
+      return isSignedIn() && exists(teamPath) && get(teamPath).data.ownerId == request.auth.uid;
+    }
+
+    function isTeamMember(teamId) {
+      let teamPath = /databases/$(database)/documents/teams/$(teamId);
+      return isSignedIn() && exists(teamPath) && (
+        get(teamPath).data.ownerId == request.auth.uid || 
+        request.auth.uid in get(teamPath).data.get('memberIds', []) ||
+        exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid))
+      );
+    }
+
+    function isCollaborator(data) {
+      return data != null && data.get('teamId', null) != null && isTeamMember(data.teamId);
+    }
+
+    // --- 1. TEAMS & MEMBERSHIP (REFACTORED DELETION) ---
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isTeamOwner(teamId) || 
+                   (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds']));
+      
+      // PHASE 5: Delete the team document itself (Last Step)
+      allow delete: if isTeamOwner(teamId);
+
+      match /workspaces/{wsId} {
+        allow read, write: if isTeamMember(teamId);
+        // PHASE 2: Clear shared workspaces
+        allow delete: if isTeamOwner(teamId);
+      }
+
+      match /members/{memberId} {
+        allow read: if isTeamMember(teamId);
+        // PHASE 3: Wipe membership registry
+        allow write, delete: if isTeamOwner(teamId) || isOwner(memberId); 
+      }
+
+      // PHASE 4: Void sub-collection invitations
+      match /invitations/{inviteId} {
+        allow read, write, delete: if isTeamOwner(teamId);
+      }
+    }
+
+    // --- 2. GLOBAL INVITES ---
+    match /invites/{inviteId} {
+      allow read, list: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.recipientEmail == request.auth.token.email ||
+        (resource.data.get('teamId', null) != null && isTeamOwner(resource.data.teamId))
+      );
+      allow create: if isSignedIn();
+      // PHASE 4: Void global invitations
+      allow delete, update: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientId == request.auth.uid ||
+        (resource.data.get('teamId', null) != null && isTeamOwner(resource.data.teamId))
+      );
+    }
+
+    // --- 3. USER DATA & NODES ---
+    match /users/{userId} {
+      allow get: if isSignedIn(); 
+      allow list: if isSignedIn() && request.query.limit <= 1;
+      allow write: if isOwner(userId);
+
+      match /workspaces/{wsId} {
+        allow read: if isOwner(userId) || isCollaborator(resource.data);
+        allow create: if isOwner(userId) || (request.resource.data.teamId != null && isTeamOwner(request.resource.data.teamId));
+        allow update: if isOwner(userId) || isCollaborator(resource.data);
+        allow delete: if isOwner(userId) && (resource.data.get('teamId', null) == null);
+      }
+
+      match /nodes/{nodeId} {
+        allow read: if isOwner(userId) || isCollaborator(resource.data);
+        allow write: if isOwner(userId) || isCollaborator(resource.data) || isCollaborator(request.resource.data);
+        // PHASE 1: Unlinking files
+        allow delete: if isOwner(userId) || isCollaborator(resource.data);
+      }
+
+      match /keys/{keyId} { 
+        allow read, write: if isOwner(userId); 
+      }
+      
+      match /invites/{inviteId} { 
+        allow read, write, delete: if isOwner(userId); 
+        allow create: if isSignedIn(); 
+      }
+    }
+  }
+}

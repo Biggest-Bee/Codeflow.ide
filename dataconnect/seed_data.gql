@@ -1,0 +1,96 @@
+mutation CreateDemoData @transaction @auth(level: USER, insecureReason: "Seed data mutation is for internal use and can be run by any authenticated user.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "Alice Smith",
+      email: "alice.smith@example.com",
+      createdAt: "2023-01-01T10:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      displayName: "Bob Johnson",
+      email: "bob.johnson@example.com",
+      createdAt: "2023-01-01T10:05:00Z"
+    }
+  ])
+  project_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      name: "Alice's First Project",
+      description: "A project for learning GraphQL.",
+      language: "GraphQL",
+      createdAt: "2023-01-02T11:00:00Z",
+      updatedAt: "2023-01-02T11:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      name: "Bob's Awesome App",
+      description: "An application built with Firebase.",
+      language: "JavaScript",
+      createdAt: "2023-01-03T12:00:00Z",
+      updatedAt: "2023-01-03T12:00:00Z"
+    }
+  ])
+  file_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440004",
+      projectId: "550e8400-e29b-41d4-a716-446655440002",
+      name: "schema.gql",
+      content: "type Query { hello: String }",
+      fileType: "GraphQL",
+      createdAt: "2023-01-02T11:15:00Z",
+      updatedAt: "2023-01-02T11:15:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440005",
+      projectId: "550e8400-e29b-41d4-a716-446655440003",
+      name: "main.js",
+      content: "console.log('Hello Firebase!');",
+      fileType: "JavaScript",
+      createdAt: "2023-01-03T12:10:00Z",
+      updatedAt: "2023-01-03T12:10:00Z"
+    }
+  ])
+  codeSnippet_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440006",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      title: "GraphQL Hello World",
+      code: "query { hello }",
+      language: "GraphQL",
+      description: "A basic GraphQL query.",
+      tags: ["graphql", "hello-world"],
+      createdAt: "2023-01-04T13:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440007",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      title: "Firebase Init",
+      code: "firebase.initializeApp(config);",
+      language: "JavaScript",
+      description: "Initializing Firebase in a web app.",
+      tags: ["firebase", "javascript"],
+      createdAt: "2023-01-04T13:05:00Z"
+    }
+  ])
+  aIChat_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440008",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      projectId: "550e8400-e29b-41d4-a716-446655440002",
+      userMessage: "How do I fetch data with GraphQL?",
+      aiResponse: "You can use queries to fetch data in GraphQL.",
+      createdAt: "2023-01-05T14:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440009",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      fileId: "550e8400-e29b-41d4-a716-446655440005",
+      userMessage: "What is the content of main.js?",
+      aiResponse: "The content of main.js is: console.log('Hello Firebase!');",
+      createdAt: "2023-01-05T14:05:00Z"
+    }
+  ])
+}

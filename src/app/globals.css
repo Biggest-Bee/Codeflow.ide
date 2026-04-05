@@ -1,0 +1,76 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --background: 206 14% 10%;
+    --foreground: 210 40% 98%;
+    --card: 206 14% 13%;
+    --card-foreground: 210 40% 98%;
+    --popover: 206 14% 13%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 208 92% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 208 13% 19%;
+    --secondary-foreground: 194 73% 72%;
+    --muted: 208 13% 19%;
+    --muted-foreground: 215 16% 65%;
+    --accent: 194 73% 72%;
+    --accent-foreground: 206 14% 10%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 208 13% 19%;
+    --input: 208 13% 19%;
+    --ring: 208 92% 64%;
+    --radius: 0.75rem;
+    
+    /* Font variable definitions */
+    --font-body: 'Inter', sans-serif;
+    --font-code: 'Source Code Pro', monospace;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code, pre {
+    font-family: var(--font-code);
+  }
+
+  ::selection {
+    background-color: hsla(var(--primary), 0.3);
+  }
+}
+
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsla(var(--muted-foreground), 0.5);
+}
+
+.editor-container {
+  font-variant-ligatures: none;
+}
