@@ -4,12 +4,103 @@
       "$userId": {
         ".read": "auth != null && $userId === auth.uid",
         ".write": "auth != null && $userId === auth.uid",
-
+        
+        "sessions": {
+          ".read": "auth != null && $userId === auth.uid",
+          ".write": "auth != null && $userId === auth.uid"
+        },
+        
+        "settings": {
+          ".read": "auth != null && $userId === auth.uid", 
+          ".write": "auth != null && $userId === auth.uid"
+        },
+        
         "apiKeys": {
           ".read": false,
           ".write": "auth != null && $userId === auth.uid"
+        },
+        
+        "workspaces": {
+          ".read": "auth != null && $userId === auth.uid",
+          ".write": "auth != null && $userId === auth.uid",
+          ".indexOn": ["createdAt", "teamId"]
+        },
+        
+        "nodes": {
+          ".read": "auth != null && $userId === auth.uid",
+          ".write": "auth != null && $userId === auth.uid",
+          ".indexOn": ["workspaceId", "parentId", "type", "teamId"]
+        },
+        
+        "teams": {
+          ".read": "auth != null && $userId === auth.uid",
+          ".write": "auth != null && $userId === auth.uid"
+        },
+        
+        "invites": {
+          ".read": "auth != null && $userId === auth.uid",
+          ".write": "auth != null && $userId === auth.uid",
+          ".indexOn": ["createdAt", "status", "teamId"]
         }
       }
-    }
+    },
+    
+    "teams": {
+      "$teamId": {
+        ".read": "auth != null && (root.child('teams').child($teamId).child('ownerId').val() === auth.uid || root.child('teams').child($teamId).child('memberIds').child(auth.uid).exists())",
+        ".write": "auth != null && root.child('teams').child($teamId).child('ownerId').val() === auth.uid",
+        ".indexOn": ["ownerId", "createdAt"],
+        
+        "members": {
+          ".read": "auth != null && (root.child('teams').child($teamId).child('ownerId').val() === auth.uid || root.child('teams').child($teamId).child('memberIds').child(auth.uid).exists())",
+          ".write": "auth != null && root.child('teams').child($teamId).child('ownerId').val() === auth.uid",
+          ".indexOn": ["userId", "joinedAt"]
+        },
+        
+        "workspaces": {
+          ".read": "auth != null && (root.child('teams').child($teamId).child('ownerId').val() === auth.uid || root.child('teams').child($teamId).child('memberIds').child(auth.uid).exists())",
+          ".write": "auth != null && root.child('teams').child($teamId).child('ownerId').val() === auth.uid",
+          ".indexOn": ["createdAt", "userId"]
+        },
+        
+        "apiKeys": {
+          ".read": "auth != null && (root.child('teams').child($teamId).child('ownerId').val() === auth.uid || root.child('teams').child($teamId).child('memberIds').child(auth.uid).exists())",
+          ".write": "auth != null && root.child('teams').child($teamId).child('ownerId').val() === auth.uid"
+        },
+        
+        "invites": {
+          ".read": "auth != null && (root.child('teams').child($teamId).child('ownerId').val() === auth.uid || root.child('teams').child($teamId).child('memberIds').child(auth.uid).exists())",
+          ".write": "auth != null && root.child('teams').child($teamId).child('ownerId').val() === auth.uid",
+          ".indexOn": ["createdAt", "senderId", "teamId"]
+        }
+      }
+    },
+    
+    "invites": {
+      "$inviteId": {
+        ".read": "auth != null && (data.child('senderId').val() === auth.uid || data.child('recipientId').val() === auth.uid || data.child('recipientEmail').val() === auth.token.email)",
+        ".write": "auth != null && (data.child('senderId').val() === auth.uid || data.child('recipientId').val() === auth.uid)",
+        ".indexOn": ["createdAt", "status", "senderId", "recipientId", "recipientEmail", "teamId"]
+      }
+    },
+    
+    "system": {
+      "config": {
+        ".read": "auth != null",
+        ".write": false
+      },
+      "metrics": {
+        ".read": false,
+        ".write": false
+      },
+      "servers": {
+        ".read": "auth != null",
+        ".write": false,
+        ".indexOn": ["region", "id"]
+      }
+    },
+    
+    ".read": false,
+    ".write": false
   }
 }
