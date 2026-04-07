@@ -57,7 +57,7 @@
     "firebase-functions": "^7.2.2",
     "firebase-tools": "^15.13.0",
     "genkit": "1.31.0",
-    "glob": "^13.0.6",
+    "glob": "13.0.6",
     "jszip": "^3.10.1",
     "loadash": "^1.0.0",
     "lucide-react": "^0.475.0",
@@ -96,6 +96,7 @@
     "tmp": "^0.2.3",
     "http-proxy-agent": "^7.0.0",
     "retry-request": "^7.0.0",
-    "google-gax": "^4.4.1"
+    "google-gax": "^4.4.1",
+    "glob": "13.0.6"
   }
 }

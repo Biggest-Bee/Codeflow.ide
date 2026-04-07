@@ -19,9 +19,16 @@ To set up the development environment and restore the directories and dependenci
    ```
 
    ```bash
-   firebase install
+   npm install -g firebase-tools@latest
    ```
 
+   ```bash
+   npm install firebase@latest
+   ```
+
+   ```bash
+   firebase login
+   ```
 
 2. **Configure Environment**:
    Ensure a `.env` file exists in the root directory with your `GEMINI_API_KEY`. This file is ignored by `.gitignore` for security reasons.
