@@ -646,8 +646,8 @@ export const AIAssistant: React.FC = () => {
         <div className="px-1.5 py-1 border-b bg-sidebar/30 shrink-0">
           <TabsList className="grid grid-cols-4 h-6 w-full bg-background/50 p-0.5 border border-white/5">
             <TabsTrigger value="generate" className="text-[8px] font-black uppercase tracking-widest">Build</TabsTrigger>
-            <TabsTrigger value="edit" className="text-[8px] font-black uppercase tracking-widest">Debug</TabsTrigger>
-            <TabsTrigger value="debug" className="text-[8px] font-black uppercase tracking-widest">Edit</TabsTrigger>
+            <TabsTrigger value="debug" className="text-[8px] font-black uppercase tracking-widest">Debug</TabsTrigger>
+            <TabsTrigger value="edit" className="text-[8px] font-black uppercase tracking-widest">Edit</TabsTrigger>
             <TabsTrigger value="settings" className="text-[8px] font-black uppercase tracking-widest">Configs</TabsTrigger>
           </TabsList>
         </div>
@@ -747,6 +747,42 @@ export const AIAssistant: React.FC = () => {
               </div>
             </TabsContent>
 
+            <TabsContent value="debug" className="mt-0 space-y-3 relative min-h-[400px]">
+              {!isKeyActive && (
+                <div className="absolute inset-0 z-[60] bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-md border border-white/5">
+                   <Lock size={32} className="text-primary animate-pulse opacity-50" />
+                </div>
+              )}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[7px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-1.5"><Search size={10} /> Workspace</label>
+                  <Select value={debugTargetWs} onValueChange={setDebugTargetWs} disabled={isDebugging}>
+                    <SelectTrigger className="h-7 text-[9px] bg-background/50 border-border px-2">
+                      <SelectValue placeholder="Select workspace..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workspaces.map(ws => <SelectItem key={ws.id} value={ws.id} className="text-[9px]">{ws.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Textarea 
+                    value={debugPrompt} 
+                    onChange={(e) => setDebugPrompt(e.target.value)} 
+                    placeholder="Describe issues to debug..." 
+                    className="min-h-[60px] text-[11px] bg-background/50 p-2" 
+                    disabled={isDebugging}
+                  />
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button variant="secondary" className="h-8 font-black uppercase tracking-widest text-[9px] gap-1.5" onClick={() => handleDebug(false)} disabled={isDebugging || !isKeyActive}>
+                      {isDebugging ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />} Debug
+                    </Button>
+                    <Button variant="outline" className="h-8 font-black uppercase tracking-widest text-[9px] border-primary/30 gap-1.5" onClick={() => handleDebug(true)} disabled={isDebugging || !isKeyActive}>
+                      <Shield size={12} className="text-primary" /> Security
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="edit" className="mt-0 space-y-3 relative min-h-[400px]">
               {!isKeyActive && (
                 <div className="absolute inset-0 z-[60] bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-md border border-white/5">
@@ -768,7 +804,7 @@ export const AIAssistant: React.FC = () => {
                 <Textarea 
                   value={editPrompt} 
                   onChange={(e) => setEditPrompt(e.target.value)} 
-                  placeholder="Describe issues to debug..." 
+                  placeholder="Describe specific area to edit..." 
                   className="min-h-[120px] text-[11px] bg-background/50 p-2" 
                   disabled={isEditing}
                 />
@@ -782,44 +818,8 @@ export const AIAssistant: React.FC = () => {
                 </div>
 
                 <Button className="w-full h-8 font-black uppercase tracking-[0.2em] text-[9px] gap-2" onClick={handleEdit} disabled={isEditing || !editPrompt.trim() || !isKeyActive}>
-                  {isEditing ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />} {isEditing ? "Debugging..." : "Debug"}
+                  {isEditing ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />} {isEditing ? "Editing..." : "Edit"}
                 </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="debug" className="mt-0 space-y-3 relative min-h-[400px]">
-              {!isKeyActive && (
-                <div className="absolute inset-0 z-[60] bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-md border border-white/5">
-                   <Lock size={32} className="text-primary animate-pulse opacity-50" />
-                </div>
-              )}
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-[7px] font-black uppercase text-primary tracking-[0.2em] flex items-center gap-1.5"><Search size={10} /> Edit Hub</label>
-                  <Select value={debugTargetWs} onValueChange={setDebugTargetWs} disabled={isDebugging}>
-                    <SelectTrigger className="h-7 text-[9px] bg-background/50 border-border px-2">
-                      <SelectValue placeholder="Select workspace..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {workspaces.map(ws => <SelectItem key={ws.id} value={ws.id} className="text-[9px]">{ws.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Textarea 
-                    value={debugPrompt} 
-                    onChange={(e) => setDebugPrompt(e.target.value)} 
-                    placeholder="Describe specific area to edit..." 
-                    className="min-h-[60px] text-[11px] bg-background/50 p-2" 
-                    disabled={isDebugging}
-                  />
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <Button variant="secondary" className="h-8 font-black uppercase tracking-widest text-[9px] gap-1.5" onClick={() => handleDebug(false)} disabled={isDebugging || !isKeyActive}>
-                      {isDebugging ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />} Edit
-                    </Button>
-                    <Button variant="outline" className="h-8 font-black uppercase tracking-widest text-[9px] border-primary/30 gap-1.5" onClick={() => handleDebug(true)} disabled={isDebugging || !isKeyActive}>
-                      <Shield size={12} className="text-primary" /> Security
-                    </Button>
-                  </div>
-                </div>
               </div>
             </TabsContent>
             

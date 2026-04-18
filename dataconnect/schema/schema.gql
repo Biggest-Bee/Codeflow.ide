@@ -1,45 +1,48 @@
 type User @table {
   displayName: String!
-  email: String
-  photoUrl: String
-  preferences: String # JSON for AI settings
+  email: String!
   createdAt: Timestamp!
+  photoUrl: String
+  lastLoginAt: Timestamp
 }
 
 type Project @table {
-  user: User!
   name: String!
-  description: String
-  language: String
+  isTeamProject: Boolean!
   createdAt: Timestamp!
-  updatedAt: Timestamp!
+  description: String
+  lastModifiedAt: Timestamp
+  owner: User
+  team: Team
 }
 
 type File @table {
-  project: Project!
   name: String!
   content: String!
-  fileType: String
+  language: String!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type AIChat @table {
-  user: User!
+  filePath: String
   project: Project
-  file: File
-  userMessage: String!
-  aiResponse: String!
-  feedback: String
-  createdAt: Timestamp!
 }
 
-type CodeSnippet @table {
-  user: User!
-  title: String!
-  code: String!
-  language: String!
-  description: String
-  tags: [String]
+type Team @table {
+  name: String!
+  owner: User!
   createdAt: Timestamp!
+  description: String
+}
+
+type TeamMembership @table(key: ["user", "team"]) {
+  role: String!
+  joinedAt: Timestamp!
+  user: User!
+  team: Team!
+}
+
+type ProjectAccess @table(key: ["project", "user"]) {
+  permissionLevel: String!
+  grantedAt: Timestamp!
+  project: Project!
+  user: User!
 }

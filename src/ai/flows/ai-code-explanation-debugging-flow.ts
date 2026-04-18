@@ -17,12 +17,12 @@ import {
 export async function aiCodeExplanationAndDebuggingInternal(input: AiCodeExplanationAndDebuggingInput): Promise<AiCodeExplanationAndDebuggingOutput> {
   try {
     console.log("ANALYSIS START. Key present:", !!input.apiKey, "Preview:", input.apiKey?.slice(0, 5) + "...");
-    const genkitInstance = getGenkit(input.apiKey);
+    const genkitInstance = await getGenkit(input.apiKey);
 
     const { output } = await genkitInstance.generate({
       model: 'googleai/gemini-2.5-flash-lite',
       config: {
-        maxOutputTokens: 8192,
+        maxOutputTokens: 50000,
         temperature: 0.2,
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -31,12 +31,12 @@ export async function aiCodeExplanationAndDebuggingInternal(input: AiCodeExplana
           { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
         ],
       },
-      prompt: `You are an Autonomous AI Debugger and Architect using Gemini 2.5 Flash Lite. 
+      prompt: `You are an Autonomous AI Debugger and Architect using Gemini 2.5 Flash Lite.
 
 CONTEXT: ${input.userContext || 'General code review and refinement'}
 SECURITY SCAN: ${input.isSecurityScan ? 'CRITICAL - Find all vulnerabilities' : 'Logical/Architectural refinement'}
 
-WORKSPACE CONTEXT:
+CODE TO ANALYZE:
 ${(input.filesToAnalyze || []).map((f: any) => `### File: ${f.fileName}\n\`\`\`\n${f.fileContent}\n\`\`\``).join('\n\n')}
 
 STRICT RULES:

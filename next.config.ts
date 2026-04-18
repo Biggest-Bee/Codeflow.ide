@@ -9,24 +9,7 @@ const nextConfig: NextConfig = {
   // Empty turbopack config to silence Next.js 16 warning
   turbopack: {} as any,
 
-  // 2. SECURITY HEADERS: Added COOP and COEP for Firebase Auth & Isolation
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups', // Allows Firebase Google Login
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
-          },
-        ],
-      },
-    ];
-  },
+  // 2. SECURITY HEADERS: Removed COOP/COEP to allow Firebase Auth popup to close properly
 
   // 3. WINDOWS SYMLINK FIX: Essential for your EPERM errors
   webpack: (config, { isServer }) => {
