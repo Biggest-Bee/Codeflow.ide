@@ -16,15 +16,8 @@ import {
 export async function generateCodeInternal(input: AiCodeGenerationInput): Promise<AiCodeGenerationOutput> {
   try {
     console.log("SYNTHESIS START. Key present:", !!input.apiKey, "Preview:", input.apiKey?.slice(0, 5) + "...");
-    
-    const context = input.workspaceContext || [];
-    if (context.length > 50) throw new Error('Workspace context too large (max 50 files).');
 
-    const genkitInstance = getGenkit(input.apiKey);
-
-    const workspaceContextText = context.map((node: any) => 
-      "- " + node.type + ": " + node.path + (node.content ? "\n(Content: " + node.content.slice(0, 3000) + "...)" : "")
-    ).join('\n');
+    const genkitInstance = await getGenkit(input.apiKey);
 
     const strategyMap = {
       'single-file': "One file in the root. No folders.",
@@ -33,9 +26,9 @@ export async function generateCodeInternal(input: AiCodeGenerationInput): Promis
     };
 
     const { output } = await genkitInstance.generate({
-      model: 'googleai/gemini-2.5-flash-lite',
+      model: 'googleai/gemini-2.5-flash',
       config: {
-        maxOutputTokens: 8192,
+        maxOutputTokens: 50000,
         temperature: 0.2,
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -44,26 +37,23 @@ export async function generateCodeInternal(input: AiCodeGenerationInput): Promis
           { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
         ],
       },
-      prompt: `You are an elite Software Architect using Gemini 2.5 Flash. 
+      prompt: `You are an elite Software Architect using Gemini 2.5 Flash.
 
 DESIGN STRATEGY: ${strategyMap[input.designStrategy as keyof typeof strategyMap] || 'Modular'}
 COMPLEXITY: ${input.complexityLevel || 'Medium'}
 LANGUAGES: ${(input.languages || []).join(', ') || 'Industry standard'}
-
-WORKSPACE CONTEXT:
-${workspaceContextText}
 
 USER REQUEST: ${input.userPrompt}
 
 STRICT ARCHITECTURAL RULES (NON-NEGOTIABLE):
 1. Provide COMPLETE code. NO PLACEHOLDERS.
 2. PRESERVATION: BUILD AROUND existing files if they exist, but ensure the root is NEVER empty.
-3. DIRECTORY HIERARCHY: 
+3. DIRECTORY HIERARCHY:
    - Root Folders: MUST be directly in the project root.
    - For Modular Strategy: AT LEAST 4 ROOT FOLDERS, EACH containing 0-3 SUBFOLDERS.
    - For Highly Decoupled Strategy: AT LEAST 8 ROOT FOLDERS, EACH containing between 0 and 6 NESTED SUBFOLDERS.
    - ZERO GHOST FOLDERS: EVERY folder created (root and nested) MUST contain a functional logic file (.ts or .tsx).
-4. ROOT FILES: 
+4. ROOT FILES:
    - Essential configuration and entry points MUST exist in the root hierarchy.
    - For Highly Decoupled: You MUST have 6-8 functional files directly in the PROJECT ROOT.
 5. Return a list of file operations to execute the build.`,

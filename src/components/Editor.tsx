@@ -6,7 +6,7 @@ import {
   FileCode, Save, X, ChevronRight, Hash, Code, 
   FileJson, FileText, Globe, FileBox, Layers,
   Activity, Zap, Globe2, Shield, Terminal as TerminalIcon,
-  ChevronUp, ChevronDown, Trash2, Scale
+  ChevronUp, ChevronDown, Trash2, Scale, ToggleLeft, ToggleRight, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,9 +47,11 @@ export const Editor: React.FC = () => {
   const [latency, setLatency] = useState('0ms');
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [terminalLogs, setTerminalLogs] = useState<{msg: string, type: 'info' | 'error' | 'success'}[]>([]);
+  const [autoSave, setAutoSave] = useState(true);
   
   const lastSyncedId = useRef<string | null>(null);
   const startTimeRef = useRef<number>(0);
+  const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (activeFileId !== lastSyncedId.current) {
@@ -74,6 +76,52 @@ export const Editor: React.FC = () => {
     }
   }, [isDirty]);
 
+  // Auto-save to database every 1 second when autosave is on
+  useEffect(() => {
+    if (autoSave && isDirty && activeFileId) {
+      autoSaveIntervalRef.current = setInterval(() => {
+        if (activeFileId && localContent) {
+          updateNode(activeFileId, { content: localContent });
+          setIsDirty(false);
+          addLog(`Auto-saved ${activeFile.name}`, 'info');
+        }
+      }, 1000);
+    } else {
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+        autoSaveIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+      }
+    };
+  }, [autoSave, isDirty, localContent, activeFile, activeFileId, updateNode]);
+
+  // Ctrl+S to save all when autosave is off
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!autoSave) {
+          // Save all open files
+          openFileIds.forEach(id => {
+            const node = nodes[id];
+            if (node && node.content) {
+              updateNode(id, { content: node.content });
+              addLog(`Saved ${node.name}`, 'success');
+            }
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [autoSave, openFileIds, nodes, updateNode]);
+
   const addLog = (msg: string, type: 'info' | 'error' | 'success' = 'info') => {
     setTerminalLogs(prev => [...prev.slice(-49), { msg, type }]);
   };
@@ -94,6 +142,20 @@ export const Editor: React.FC = () => {
     const newName = `${baseName}.${newExt}`;
     updateNode(activeFileId, { language: newLang, name: newName });
     addLog(`Changed language to ${newLang}`, 'info');
+  };
+
+  const handleDownloadToDisk = () => {
+    if (!activeFile) return;
+    const blob = new Blob([localContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = activeFile.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addLog(`Downloaded ${activeFile.name} to disk`, 'success');
   };
 
   const breadcrumbs = useMemo(() => {
@@ -181,6 +243,24 @@ export const Editor: React.FC = () => {
           <Button 
             variant="ghost" 
             size="icon" 
+            className={cn("h-7 w-7 transition-colors", autoSave ? "text-primary" : "text-muted-foreground")}
+            onClick={() => setAutoSave(!autoSave)}
+            title={autoSave ? "Autosave On" : "Autosave Off"}
+          >
+            {autoSave ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 transition-colors text-muted-foreground hover:text-primary"
+            onClick={handleDownloadToDisk}
+            title="Download to Disk"
+          >
+            <Download size={14} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
             className={cn("h-7 w-7 transition-colors", isDirty ? "text-primary animate-pulse" : "text-muted-foreground")}
             onClick={() => {
               if (activeFileId) {
@@ -188,6 +268,7 @@ export const Editor: React.FC = () => {
                 addLog(`Manual save for ${activeFile.name}`, 'success');
               }
             }}
+            title="Save"
           >
             <Save size={14} />
           </Button>

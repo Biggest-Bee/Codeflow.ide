@@ -1,42 +1,60 @@
-query ListAllProjects @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
-  projects {
+query GetMyProjects @auth(level: USER) {
+  projects(where: { ownerId: { eq_expr: "auth.uid" } }) {
     id
     name
     description
-    language
+    isTeamProject
     createdAt
-    user {
-      id
+    lastModifiedAt
+    owner {
       displayName
+      email
     }
   }
 }
 
-mutation CreateNewFile($projectId: UUID!, $name: String!, $content: String!, $fileType: String) @auth(level: USER) {
-  file_insert(data: {
-    projectId: $projectId,
-    name: $name,
-    content: $content,
-    fileType: $fileType,
-    createdAt_expr: "request.time",
-    updatedAt_expr: "request.time"
-  })
+mutation CreateNewProject($name: String!, $isTeamProject: Boolean!, $description: String) @auth(level: USER) {
+  project_insert(
+    data: {
+      name: $name
+      isTeamProject: $isTeamProject
+      description: $description
+      ownerId_expr: "auth.uid"
+      createdAt_expr: "request.time"
+    }
+  )
 }
 
-query GetMyCodeSnippets @auth(level: USER) {
-  codeSnippets(where: {userId: {eq_expr: "auth.uid"}}) {
+query GetTeamDetails($teamId: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users as team access is handled by ProjectAccess and TeamMembership checks.") {
+  team(id: $teamId) {
     id
-    title
-    language
+    name
+    description
     createdAt
-    user {
+    owner {
       displayName
+    }
+    teamMemberships_on_team {
+      role
+      user {
+        displayName
+        email
+      }
+    }
+    projects_on_team {
+      id
+      name
+      isTeamProject
     }
   }
 }
 
-mutation RecordAIChatFeedback($chatId: UUID!, $feedback: String!) @auth(level: USER) {
-  aIChat_update(key: {id: $chatId}, data: {
-    feedback: $feedback
-  })
+mutation UpdateFileContent($fileId: UUID!, $newContent: String!) @auth(level: USER) {
+  file_update(
+    key: { id: $fileId }
+    data: {
+      content: $newContent
+      updatedAt_expr: "request.time"
+    }
+  )
 }

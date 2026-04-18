@@ -7,10 +7,10 @@ import {
   Plus, ChevronRight, ChevronDown, FileCode, Folder, Trash, FolderPlus,
   FilePlus, Layers, Download, Edit2, MoreHorizontal,
   LogOut, Search, Code, FileJson, FileText,
-  FileBox, Globe, Hash, X, LayoutGrid,
-  FileUp, Zap, Check, ArrowUpCircle, Shield,
+  FileUp, Upload, FolderOpen, FileEdit, Save, Settings, 
   Building2, Users, UserX, Undo2, Copyright,
-  Scale
+  Scale, RefreshCw, Hash, Globe, FileBox, ArrowUpCircle,
+  LayoutGrid, Check, X, Shield, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,7 +95,7 @@ const FileTreeNode = React.memo(({
                 {canEdit && <DropdownMenuItem className="text-xs" onClick={() => { setRenamingId(node.id); setRenamingValue(node.name); }}><Edit2 size={12} className="mr-2" /> Rename</DropdownMenuItem>}
                 <DropdownMenuItem className="text-xs" onClick={() => downloadNode(node.id)}><Download size={12} className="mr-2" /> Download</DropdownMenuItem>
                 
-                {node.parentId && canEdit && (
+                {canEdit && (
                   <DropdownMenuItem className="text-xs" onClick={() => moveNode(node.id, null)}>
                     <ArrowUpCircle size={12} className="mr-2 text-primary" /> Move to Root
                   </DropdownMenuItem>
@@ -125,7 +125,7 @@ export const Sidebar: React.FC = () => {
     workspaces, activeWorkspaceId, setActiveWorkspace, createWorkspace, deleteWorkspace,
     nodes, activeFileId, openFile, deleteNode, renameNode,
     downloadNode, downloadWorkspace, createNode, moveNode, 
-    moveNodeToWorkspace, importWorkspace, renameWorkspace,
+    moveNodeToWorkspace, importWorkspace, renameWorkspace, updateNode,
     teams, activeTeamId, setActiveTeam, isTeamOwner, isTeamMember,
     invites, acceptInvite, rejectInvite
   } = useFiles();
@@ -155,6 +155,43 @@ export const Sidebar: React.FC = () => {
       setNewWsName(''); setIsCreatingWs(false);
     }
   };
+
+  const handleLiveFileEdit = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files || files.length === 0) return;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          const content = event.target?.result as string;
+          
+          // Find matching file in workspace by name
+          const matchingNodeId = Object.keys(nodes).find(id => {
+            const node = nodes[id];
+            return node.name === file.name && node.type === 'file';
+          });
+
+          if (matchingNodeId) {
+            updateNode(matchingNodeId, { content });
+          } else {
+            // Create new file if not found
+            if (activeWorkspaceId) {
+              createNode(null, file.name, 'file', undefined, content);
+            }
+          }
+        };
+
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  }, [nodes, activeWorkspaceId, updateNode, createNode]);
 
   const onDragStart = useCallback((e: React.DragEvent, nodeId: string) => {
     e.dataTransfer.setData('nodeId', nodeId);
@@ -189,13 +226,18 @@ export const Sidebar: React.FC = () => {
             </div>
             <h1 className="font-black text-[10px] tracking-widest uppercase text-foreground/90">CodeFlow</h1>
           </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10" onClick={() => {
-            const input = document.createElement('input'); input.type = 'file'; input.accept = '.zip';
-            input.onchange = (e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) importWorkspace(file); };
-            input.click();
-          }}>
-            <FileUp size={14} />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10" onClick={() => {
+              const input = document.createElement('input'); input.type = 'file'; input.accept = '.zip';
+              input.onchange = (e) => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) importWorkspace(file); };
+              input.click();
+            }}>
+              <FileUp size={14} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10" onClick={handleLiveFileEdit}>
+              <RefreshCw size={14} />
+            </Button>
+          </div>
         </div>
 
         <Tabs value={sidebarTab} onValueChange={(v: any) => setSidebarTab(v)} className="w-full">
@@ -282,6 +324,29 @@ export const Sidebar: React.FC = () => {
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="New File" onClick={() => createNode(null, "new_file.ts", "file")}><FilePlus size={10} /></Button>
                     <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="New Folder" onClick={() => createNode(null, "new_folder", "folder")}><FolderPlus size={10} /></Button>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="Upload File/Folder" onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.multiple = true;
+                      input.webkitdirectory = false;
+                      input.onchange = async (e) => {
+                        const files = (e.target as HTMLInputElement).files;
+                        if (!files || files.length === 0) return;
+                        for (let i = 0; i < files.length; i++) {
+                          const file = files[i];
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const content = event.target?.result as string;
+                            if (activeWorkspaceId) {
+                              createNode(null, file.name, 'file', undefined, content);
+                            }
+                          };
+                          reader.readAsText(file);
+                        }
+                      };
+                      input.click();
+                    }}><Upload size={10} /></Button>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="Edit from Disk" onClick={handleLiveFileEdit}><FileEdit size={10} /></Button>
                   </div>
                 )}
               </div>
@@ -371,6 +436,29 @@ export const Sidebar: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="New File" onClick={() => createNode(null, "new_file.ts", "file")}><FilePlus size={10} /></Button>
                         <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="New Folder" onClick={() => createNode(null, "new_folder", "folder")}><FolderPlus size={10} /></Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="Upload File/Folder" onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.multiple = true;
+                          input.webkitdirectory = false;
+                          input.onchange = async (e) => {
+                            const files = (e.target as HTMLInputElement).files;
+                            if (!files || files.length === 0) return;
+                            for (let i = 0; i < files.length; i++) {
+                              const file = files[i];
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const content = event.target?.result as string;
+                                if (activeWorkspaceId) {
+                                  createNode(null, file.name, 'file', undefined, content);
+                                }
+                              };
+                              reader.readAsText(file);
+                            }
+                          };
+                          input.click();
+                        }}><Upload size={10} /></Button>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-primary/10 hover:text-primary" title="Edit from Disk" onClick={handleLiveFileEdit}><FileEdit size={10} /></Button>
                       </div>
                     )}
                   </div>
