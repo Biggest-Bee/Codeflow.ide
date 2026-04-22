@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { FileProvider } from '@/context/FileContext';
 import { Sidebar } from '@/components/Sidebar';
 import { Editor } from '@/components/Editor';
 import { AIAssistant } from '@/components/AIAssistant';
 import { Toaster } from '@/components/ui/toaster';
-import { PanelRightOpen, PanelRightClose, Sparkles, LogIn, Users, Loader2, Scale } from 'lucide-react';
+import { PanelRightOpen, PanelRightClose, Sparkles, LogIn, Users, Loader2, Scale, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { LicenseDialog } from '@/components/LicenseDialog';
+import { LegalAcceptanceDialog } from '@/components/LegalAcceptanceDialog';
 
 const Dashboard: React.FC = () => {
   const [isAiOpen, setIsAiOpen] = useState(true);
@@ -52,6 +53,50 @@ const Dashboard: React.FC = () => {
 
 const LoginScreen: React.FC = () => {
   const { signInWithGoogle, signInAsGuest, isLoading } = useAuth();
+  const [legalDialogOpen, setLegalDialogOpen] = useState(false);
+  const [pendingSignInMethod, setPendingSignInMethod] = useState<'google' | 'guest' | null>(null);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+
+  useEffect(() => {
+    // Check if user has already accepted legal documents
+    const accepted = localStorage.getItem('codeflow-legal-accepted') === 'true';
+    setLegalAccepted(accepted);
+  }, []);
+
+  const handleSignInWithGoogle = () => {
+    if (legalAccepted) {
+      signInWithGoogle();
+    } else {
+      setPendingSignInMethod('google');
+      setLegalDialogOpen(true);
+    }
+  };
+
+  const handleSignInAsGuest = () => {
+    if (legalAccepted) {
+      signInAsGuest();
+    } else {
+      setPendingSignInMethod('guest');
+      setLegalDialogOpen(true);
+    }
+  };
+
+  const handleLegalAccept = () => {
+    setLegalAccepted(true);
+    setLegalDialogOpen(false);
+    
+    // Proceed with the pending sign-in method
+    if (pendingSignInMethod === 'google') {
+      signInWithGoogle();
+    } else if (pendingSignInMethod === 'guest') {
+      signInAsGuest();
+    }
+    setPendingSignInMethod(null);
+  };
+
+  const handleLegalCancel = () => {
+    setPendingSignInMethod(null);
+  };
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0B0D0F] relative overflow-hidden">
@@ -76,7 +121,7 @@ const LoginScreen: React.FC = () => {
         <div className="flex flex-col gap-3 w-full max-w-sm">
           <Button 
             size="lg" 
-            onClick={signInWithGoogle} 
+            onClick={handleSignInWithGoogle} 
             disabled={isLoading}
             className="w-full h-12 gap-3 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary/20"
           >
@@ -87,7 +132,7 @@ const LoginScreen: React.FC = () => {
           <Button 
             variant="outline"
             size="lg" 
-            onClick={signInAsGuest} 
+            onClick={handleSignInAsGuest} 
             disabled={isLoading}
             className="w-full h-12 gap-3 text-sm font-bold uppercase tracking-widest border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all"
           >
@@ -111,11 +156,42 @@ const LoginScreen: React.FC = () => {
             />
           </div>
           
+          <div className="flex items-center justify-center gap-4 w-full">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              asChild
+              className="h-auto p-0 gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors"
+            >
+              <a href="/privacy-policy">
+                <Shield size={10} /> Privacy Policy
+              </a>
+            </Button>
+            <div className="h-3 w-[1px] bg-white/10" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              asChild
+              className="h-auto p-0 gap-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors"
+            >
+              <a href="/terms-of-service">
+                <Scale size={10} /> Terms of Service
+              </a>
+            </Button>
+          </div>
+          
           <p className="text-[7px] text-muted-foreground/40 uppercase font-bold tracking-[0.4em]">
             Secure Cloud Storage • Guest or Google OAuth • Apache 2.0 Licensed Studio
           </p>
         </div>
       </div>
+      
+      <LegalAcceptanceDialog
+        open={legalDialogOpen}
+        onOpenChange={setLegalDialogOpen}
+        onAccept={handleLegalAccept}
+        onCancel={handleLegalCancel}
+      />
     </div>
   );
 };

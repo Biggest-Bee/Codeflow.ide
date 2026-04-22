@@ -53,32 +53,13 @@
     },
     "singleProjectMode": true
   },
-  "dataconnect": {
-    "source": "dataconnect"
-  },
   "firestore": {
     "database": "(default)",
     "location": "us-central1",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "functions": [
-    {
-      "codebase": "default",
-      "disallowLegacyRuntimeConfig": true,
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ],
-      "source": "functions",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ],
+  "functions": [],
   "apphosting": [
     {
       "backendId": "codeflow-ide",
@@ -131,8 +112,7 @@
         "node_modules",
         ".git",
         "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
+        "firebase-debug.*.log"
       ]
     },
     {
@@ -142,8 +122,7 @@
         "node_modules",
         ".git",
         "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
+        "firebase-debug.*.log"
       ]
     }
   ],

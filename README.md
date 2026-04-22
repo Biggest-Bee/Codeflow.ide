@@ -56,3 +56,4 @@ To set up the development environment and restore the directories and dependenci
 Copyright © 2026 Frostvale Studio. Licensed under the Apache License, Version 2.0.
 
 # test
+.\node_modules\.bin\firebase.cmd deploy --except hosting
